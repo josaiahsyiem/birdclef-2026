@@ -9,7 +9,7 @@ for each of 234 wildlife species for every window.
 
 ---
 
-## Step 1 — Audio Preprocessing
+## Step 1: Audio Preprocessing
 
 **Input:** Raw `.ogg` soundscape files (60 seconds, 32kHz)
 
@@ -22,7 +22,7 @@ for each of 234 wildlife species for every window.
 
 ---
 
-## Step 2 — Perch v2 Feature Extraction
+## Step 2: Perch v2 Feature Extraction
 
 **Input:** Raw waveform windows
 
@@ -45,7 +45,7 @@ training runs load from cache, saving 30-60 minutes per run.
 
 ---
 
-## Step 3 — Prior Table Construction
+## Step 3: Prior Table Construction
 
 **Input:** Training soundscape labels + recording metadata (site, hour)
 
@@ -64,7 +64,7 @@ across hour boundaries rather than discrete jumps.
 
 ---
 
-## Step 4 — MLP Probes
+## Step 4: MLP Probes
 
 **Input:** Perch embeddings `(n_windows, 1536)`
 
@@ -83,7 +83,7 @@ each probe to specialize on its own positive/negative distribution.
 
 ---
 
-## Step 5 — ProtoSSM v2
+## Step 5: ProtoSSM v2
 
 **Input:** Perch embeddings + raw logits `(n_windows, 1536)` and `(n_windows, n_classes)`
 
@@ -107,7 +107,7 @@ patterns well, which matters for species with variable call rates.
 
 ---
 
-## Step 6 — ResidualSSM
+## Step 6: ResidualSSM
 
 **Input:** ProtoSSM output logits `(n_windows, n_classes)`
 
@@ -125,7 +125,7 @@ the full ProtoSSM.
 
 ---
 
-## Step 7 — xSED Rank Blend (inside Model_74)
+## Step 7: xSED Rank Blend (inside Model_74)
 
 **Input:**
 - ProtoSSM probabilities `(n_windows, n_classes)`
@@ -143,7 +143,7 @@ to percentile ranks normalizes both to the same scale before combining.
 
 ---
 
-## Step 8 — 5-Gate Post-Processing
+## Step 8: 5-Gate Post-Processing
 
 Applied sequentially to the rank-blended predictions:
 
@@ -157,7 +157,7 @@ Applied sequentially to the rank-blended predictions:
 
 ---
 
-## Step 9 — Division Attention Ensemble Blend
+## Step 9: Division Attention Ensemble Blend
 
 **Input:** Submission CSVs from all three models
 
@@ -177,7 +177,7 @@ the ensemble score.
 
 ---
 
-## Step 10 — TAX_SMOOTHING
+## Step 10: TAX_SMOOTHING
 
 **Input:** Blended submission
 
