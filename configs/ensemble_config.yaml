@@ -1,0 +1,78 @@
+# BirdCLEF+ 2026 — Ensemble Configuration
+# All paths are relative to the project root.
+# Override with absolute paths for local runs.
+
+competition:
+  num_classes: 234
+  sample_rate: 32000
+  window_sec: 5
+  n_windows: 12
+
+paths:
+  competition_dir: "data/birdclef-2026"
+  model_dir: "data/models"
+  output_dir: "outputs"
+  cache_dir: "outputs/cache"
+
+ensemble:
+  models:
+    - name: Model_21
+      submission_file: "subm_21.csv"
+      weight: 0.014
+      xSED: []
+      lb_score: 0.928
+    - name: Model_52
+      submission_file: "subm_52p.csv"
+      weight: 0.021
+      xSED: []
+      lb_score: 0.949
+    - name: Model_74
+      submission_file: "subm_74.csv"
+      weight: 0.965
+      xSED: [0.60, 0.40]
+      lb_score: 0.949
+  blend_type: "division_attention"
+  postprocess: "TAX_SMOOTHING"
+
+tax_smoothing:
+  genus_alpha: 0.15
+  class_alpha: 0.05
+
+model_21:
+  backbone: "tf_efficientnet_b0.ns_jft_in1k"
+  n_mels: 256
+  n_fft: 2048
+  hop_length: 512
+  fmin: 20
+  fmax: 16000
+  epochs: 25
+  batch_size: 64
+  lr: 0.0005
+  min_lr: 0.00001
+  weight_decay: 0.0001
+  n_folds: 5
+  seed: 42
+
+model_74:
+  perch_embed_dim: 1536
+  proto_ssm:
+    d_model: 320
+    d_state: 32
+    n_ssm_layers: 4
+    dropout: 0.12
+    n_prototypes: 2
+    n_sites: 20
+    meta_dim: 24
+    use_cross_attn: true
+    cross_attn_heads: 8
+  training:
+    n_epochs: 80
+    lr: 0.0008
+    weight_decay: 0.001
+    patience: 20
+    label_smoothing: 0.03
+    mixup_alpha: 0.4
+    focal_gamma: 2.5
+  xsed:
+    proto_weight: 0.60
+    sed_weight: 0.40
