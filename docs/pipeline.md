@@ -211,5 +211,3 @@ this ecological signal without requiring explicit co-occurrence modeling.
 | Model_52 (ProtoSSM sub-output) | 0.949 | 2.1% |
 | Model_74 (Karnakbayev pipeline) | 0.949 | 96.5% |
 | **Final ensemble + TAX_SMOOTHING** | **0.949** | — |
-
-**Final rank: 226 / 4,094 (Top 6%)**
