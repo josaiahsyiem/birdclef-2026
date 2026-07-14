@@ -231,7 +231,6 @@ This solution builds upon ideas and open-source work shared by the BirdCLEF comm
 * Yaroslav Kholmirzayev
 * F.A. Nina
 
-Their public notebooks provided valuable insights and served as important references during the competition.
 
 ---
 
