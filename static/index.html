@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BirdCLEF+ 2026 — Species Detector</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0f1117;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 700px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #1a3a1a;
+            color: #4caf50;
+            padding: 0.3rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #4caf50;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #ffffff;
+        }
+
+        h1 span {
+            color: #4caf50;
+        }
+
+        .subtitle {
+            color: #888;
+            margin-bottom: 2rem;
+            font-size: 1.05rem;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .stat {
+            background: #1a1a2e;
+            border: 1px solid #2a2a4a;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #4caf50;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 0.2rem;
+        }
+
+        .upload-box {
+            background: #1a1a2e;
+            border: 2px dashed #2a2a4a;
+            border-radius: 16px;
+            padding: 2.5rem;
+            margin-bottom: 1.5rem;
+            transition: border-color 0.3s;
+        }
+
+        .upload-box:hover {
+            border-color: #4caf50;
+        }
+
+        .upload-box input[type="file"] {
+            display: none;
+        }
+
+        .upload-label {
+            cursor: pointer;
+            display: block;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            color: #888;
+            font-size: 0.95rem;
+        }
+
+        .upload-text span {
+            color: #4caf50;
+        }
+
+        .filename {
+            margin-top: 1rem;
+            color: #4caf50;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .btn {
+            background: #4caf50;
+            color: #000;
+            border: none;
+            padding: 0.9rem 2.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .btn:hover {
+            background: #45a049;
+        }
+
+        .btn:disabled {
+            background: #2a2a4a;
+            color: #555;
+            cursor: not-allowed;
+        }
+
+        .results {
+            background: #1a1a2e;
+            border: 1px solid #2a2a4a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: left;
+            display: none;
+        }
+
+        .results h3 {
+            color: #4caf50;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+
+        .species-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #2a2a4a;
+        }
+
+        .species-row:last-child {
+            border-bottom: none;
+        }
+
+        .species-name {
+            font-size: 0.9rem;
+        }
+
+        .species-score {
+            font-size: 0.85rem;
+            color: #4caf50;
+            font-weight: 600;
+        }
+
+        .bar {
+            height: 4px;
+            background: #4caf50;
+            border-radius: 2px;
+            margin-top: 0.3rem;
+        }
+
+        .status {
+            color: #888;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .links {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .link {
+            color: #888;
+            text-decoration: none;
+            font-size: 0.85rem;
+            border: 1px solid #2a2a4a;
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .link:hover {
+            color: #4caf50;
+            border-color: #4caf50;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="badge">🏆 Top 6% — Kaggle BirdCLEF+ 2026</div>
+        <h1>Bird<span>CLef</span> 2026</h1>
+        <p class="subtitle">Acoustic species identification in the Pantanal · 234 species</p>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value">226</div>
+                <div class="stat-label">Rank / 4,094</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">0.949</div>
+                <div class="stat-label">ROC-AUC Score</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">234</div>
+                <div class="stat-label">Species</div>
+            </div>
+        </div>
+
+        <div class="upload-box">
+            <label class="upload-label" for="audioFile">
+                <div class="upload-icon">🎵</div>
+                <div class="upload-text">
+                    <span>Click to upload</span> a 60-second bird audio file<br>
+                    Supports .ogg, .wav, .mp3
+                </div>
+                <div class="filename" id="filename"></div>
+            </label>
+            <input type="file" id="audioFile" accept=".ogg,.wav,.mp3">
+        </div>
+
+        <button class="btn" id="predictBtn" disabled>Detect Species</button>
+
+        <div class="results" id="results">
+            <h3>Detected Species</h3>
+            <div id="speciesList"></div>
+        </div>
+
+        <p class="status" id="status"></p>
+
+        <div class="links">
+            <a href="/docs" class="link">📖 API Docs</a>
+            <a href="https://github.com/josaiahsyiem/birdclef-2026" class="link">💻 GitHub</a>
+            <a href="https://www.kaggle.com/joesyiem" class="link">🏅 Kaggle</a>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('audioFile');
+        const predictBtn = document.getElementById('predictBtn');
+        const filename = document.getElementById('filename');
+        const results = document.getElementById('results');
+        const speciesList = document.getElementById('speciesList');
+        const status = document.getElementById('status');
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                filename.textContent = fileInput.files[0].name;
+                filename.style.display = 'block';
+                predictBtn.disabled = false;
+            }
+        });
+
+        predictBtn.addEventListener('click', async () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            predictBtn.disabled = true;
+            predictBtn.textContent = 'Analyzing...';
+            status.textContent = 'Running inference pipeline...';
+            results.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData,
+                });
+                const data = await response.json();
+
+                if (data.top_species && data.top_species.length > 0) {
+                    speciesList.innerHTML = data.top_species.map(s => `
+                        <div class="species-row">
+                            <div>
+                                <div class="species-name">${s.species}</div>
+                                <div class="bar" style="width: ${s.confidence * 100}%"></div>
+                            </div>
+                            <div class="species-score">${(s.confidence * 100).toFixed(1)}%</div>
+                        </div>
+                    `).join('');
+                } else {
+                    speciesList.innerHTML = `<p style="color:#888">${data.message || 'No species detected.'}</p>`;
+                }
+
+                results.style.display = 'block';
+                status.textContent = '';
+            } catch (err) {
+                status.textContent = 'Error: ' + err.message;
+            }
+
+            predictBtn.disabled = false;
+            predictBtn.textContent = 'Detect Species';
+        });
+    </script>
+</body>
+
+</html>
