@@ -251,7 +251,7 @@ class LightProtoSSM(nn.Module):
 # ---------------------------------------------------------------------------
 
 class ResidualSSM(nn.Module):
-    def __init__(self, d_input=1536, d_scores=234, d_model=64, d_state=8,
+    def __init__(self, d_input=1536, d_scores=234, d_model=128, d_state=16,
                  n_classes=234, n_windows=12, dropout=0.1, n_sites=20, meta_dim=8):
         super().__init__()
         self.n_classes = n_classes
@@ -340,10 +340,23 @@ def load_models(weights_dir: str):
     res_model.load_state_dict(res_state, strict=False)
     res_model.eval()
 
+    # Load taxonomy for common names
+    taxonomy_path = weights_dir / "taxonomy.csv"
+    taxonomy = {}
+    if taxonomy_path.exists():
+        import pandas as pd
+        tax_df = pd.read_csv(taxonomy_path)
+        for _, row in tax_df.iterrows():
+            taxonomy[str(row["primary_label"])] = {
+                "common_name": str(row.get("common_name", row["primary_label"])),
+                "scientific_name": str(row.get("scientific_name", "")),
+            }
+
     return {
         "proto_ssm": proto_model,
         "res_ssm": res_model,
         "site2i": site2i,
+        "taxonomy": taxonomy,
     }
 
 
@@ -420,13 +433,15 @@ def predict(
 
     # Get top-k species
     top_indices = np.argsort(species_probs)[::-1][:top_k]
+    taxonomy = models.get("taxonomy", {})
     results = [
         {
-            "species": primary_labels[i],
+            "species": taxonomy.get(primary_labels[i], {}).get("common_name", primary_labels[i]),
+            "code": primary_labels[i],
+            "scientific": taxonomy.get(primary_labels[i], {}).get("scientific_name", ""),
             "confidence": float(round(species_probs[i], 4)),
         }
         for i in top_indices
         if species_probs[i] > 0.01
     ]
-
     return results

@@ -1,338 +1,764 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BirdCLEF+ 2026 — Species Detector</title>
+    <title>Pantanal Species Detector</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg:        #0b140b;
+            --surface:   #111d11;
+            --surface2:  #162016;
+            --border:    #1e2e1e;
+            --accent:    #6aad5a;
+            --accent2:   #4a8a3a;
+            --parchment: #e8e0cc;
+            --muted:     #6b7a5e;
+            --muted2:    #4a5740;
+            --white:     #f4f0e8;
         }
 
+        html { scroll-behavior: smooth; }
+
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #0f1117;
-            color: #e0e0e0;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: var(--bg);
+            color: var(--parchment);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            padding: 1.1rem 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(11, 20, 11, 0.88);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.82rem;
+            letter-spacing: 0.04em;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover { color: var(--parchment); }
+
+        .hero {
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            text-align: center;
+            padding: 7rem 2rem 5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 70% 55% at 50% 35%, rgba(74, 138, 58, 0.12) 0%, transparent 65%),
+                radial-gradient(ellipse 40% 30% at 20% 70%, rgba(30, 60, 20, 0.18) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 30% at 80% 80%, rgba(20, 50, 15, 0.14) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .hero-trees {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 220px;
+            pointer-events: none;
+            opacity: 0.15;
+            background:
+                radial-gradient(ellipse 60px 120px at 5% 100%, #1a3a1a 50%, transparent 51%),
+                radial-gradient(ellipse 80px 160px at 12% 100%, #162c16 50%, transparent 51%),
+                radial-gradient(ellipse 70px 140px at 22% 100%, #152815 50%, transparent 51%),
+                radial-gradient(ellipse 90px 180px at 30% 100%, #1a3218 50%, transparent 51%),
+                radial-gradient(ellipse 100px 200px at 45% 100%, #162816 50%, transparent 51%),
+                radial-gradient(ellipse 70px 150px at 55% 100%, #183018 50%, transparent 51%),
+                radial-gradient(ellipse 80px 160px at 68% 100%, #152815 50%, transparent 51%),
+                radial-gradient(ellipse 60px 130px at 76% 100%, #1a3218 50%, transparent 51%),
+                radial-gradient(ellipse 90px 170px at 87% 100%, #162c16 50%, transparent 51%),
+                radial-gradient(ellipse 65px 120px at 94% 100%, #1e3e1e 50%, transparent 51%);
+        }
+
+        .waveform {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            height: 40px;
+            margin-bottom: 2.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .waveform-bar {
+            width: 3px;
+            background: var(--accent);
+            border-radius: 2px;
+            opacity: 0.7;
+            animation: wave 1.8s ease-in-out infinite;
+        }
+
+        @keyframes wave {
+            0%, 100% { transform: scaleY(0.3); opacity: 0.35; }
+            50%       { transform: scaleY(1);   opacity: 0.8; }
+        }
+
+        .hero-eyebrow {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.4rem, 6vw, 4.2rem);
+            font-weight: 400;
+            font-style: italic;
+            color: var(--white);
+            line-height: 1.15;
+            letter-spacing: -0.01em;
+            margin-bottom: 1.75rem;
+            max-width: 760px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero h1 strong {
+            font-style: normal;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .hero-sub {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 1.05rem;
+            color: var(--muted);
+            line-height: 1.75;
+            max-width: 560px;
+            margin-bottom: 3rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-primary {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--accent);
+            color: #0b140b;
+            font-weight: 700;
+            font-size: 0.9rem;
+            padding: 0.85rem 2rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            letter-spacing: 0.02em;
+            transition: background 0.2s, transform 0.15s;
+        }
+
+        .btn-primary:hover { background: #7dc86b; transform: translateY(-1px); }
+
+        .btn-ghost {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: transparent;
+            color: var(--muted);
+            font-weight: 500;
+            font-size: 0.9rem;
+            padding: 0.85rem 2rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            text-decoration: none;
+            transition: border-color 0.2s, color 0.2s;
+        }
+
+        .btn-ghost:hover { border-color: var(--muted2); color: var(--parchment); }
+
+        .story {
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 7rem 2rem;
+        }
+
+        .section-eyebrow {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 1.25rem;
+        }
+
+        .story h2 {
+            font-size: clamp(1.9rem, 4vw, 2.8rem);
+            font-weight: 400;
+            font-style: italic;
+            color: var(--white);
+            line-height: 1.2;
+            margin-bottom: 2rem;
+        }
+
+        .story-body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 1rem;
+            color: var(--muted);
+            line-height: 1.85;
+        }
+
+        .story-body p + p { margin-top: 1.25rem; }
+
+        .story-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin-top: 4rem;
+        }
+
+        @media (max-width: 600px) {
+            .story-cards { grid-template-columns: 1fr; }
+        }
+
+        .story-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.75rem;
+        }
+
+        .card-icon { font-size: 1.4rem; margin-bottom: 1rem; }
+
+        .story-card h3 {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 0.6rem;
+        }
+
+        .story-card p {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.875rem;
+            color: var(--muted);
+            line-height: 1.65;
+        }
+
+        .pipeline {
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 6rem 2rem;
+        }
+
+        .pipeline-inner { max-width: 820px; margin: 0 auto; }
+
+        .pipeline-inner h2 {
+            font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+            font-weight: 400;
+            font-style: italic;
+            color: var(--white);
+            margin-bottom: 0.75rem;
+        }
+
+        .pipeline-inner > p {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.95rem;
+            color: var(--muted);
+            margin-bottom: 3rem;
+            line-height: 1.6;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 700px) {
+            .steps { grid-template-columns: 1fr 1fr; gap: 1rem; }
+        }
+
+        .step { text-align: center; padding: 0 0.5rem; }
+
+        .step-dot {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--accent2);
+            background: rgba(106, 173, 90, 0.08);
+            color: var(--accent);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.85rem;
+        }
+
+        .step-title {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 0.35rem;
+        }
+
+        .step-desc {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.72rem;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .demo {
+            padding: 7rem 2rem;
+            max-width: 580px;
+            margin: 0 auto;
+        }
+
+        .demo-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .demo-header h2 {
+            font-size: clamp(1.7rem, 3.5vw, 2.4rem);
+            font-weight: 400;
+            font-style: italic;
+            color: var(--white);
+            margin-bottom: 0.75rem;
+        }
+
+        .demo-header p {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.95rem;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .upload-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
             padding: 2rem;
         }
 
-        .container {
-            max-width: 700px;
-            width: 100%;
+        .upload-zone {
+            border: 1.5px dashed var(--border);
+            border-radius: 12px;
+            padding: 2.5rem 1.5rem;
             text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+            margin-bottom: 1.25rem;
         }
 
-        .badge {
-            display: inline-block;
-            background: #1a3a1a;
-            color: #4caf50;
-            padding: 0.3rem 1rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            margin-bottom: 1.5rem;
-            border: 1px solid #4caf50;
+        .upload-zone:hover, .upload-zone.active {
+            border-color: var(--accent2);
+            background: rgba(74, 138, 58, 0.04);
         }
 
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            color: #ffffff;
+        .upload-icon { font-size: 2rem; margin-bottom: 0.85rem; opacity: 0.6; }
+
+        .upload-zone p {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.875rem;
+            color: var(--muted);
+            line-height: 1.6;
         }
 
-        h1 span {
-            color: #4caf50;
-        }
+        .upload-zone p strong { color: var(--accent); font-weight: 500; }
 
-        .subtitle {
-            color: #888;
-            margin-bottom: 2rem;
-            font-size: 1.05rem;
-        }
-
-        .stats {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-bottom: 2.5rem;
-        }
-
-        .stat {
-            background: #1a1a2e;
-            border: 1px solid #2a2a4a;
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-        }
-
-        .stat-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #4caf50;
-        }
-
-        .stat-label {
+        .upload-fname {
+            margin-top: 0.75rem;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             font-size: 0.8rem;
-            color: #888;
-            margin-top: 0.2rem;
+            color: var(--accent);
         }
 
-        .upload-box {
-            background: #1a1a2e;
-            border: 2px dashed #2a2a4a;
-            border-radius: 16px;
-            padding: 2.5rem;
-            margin-bottom: 1.5rem;
-            transition: border-color 0.3s;
-        }
+        input[type="file"] { display: none; }
 
-        .upload-box:hover {
-            border-color: #4caf50;
-        }
-
-        .upload-box input[type="file"] {
-            display: none;
-        }
-
-        .upload-label {
-            cursor: pointer;
-            display: block;
-        }
-
-        .upload-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-
-        .upload-text {
-            color: #888;
-            font-size: 0.95rem;
-        }
-
-        .upload-text span {
-            color: #4caf50;
-        }
-
-        .filename {
-            margin-top: 1rem;
-            color: #4caf50;
-            font-size: 0.9rem;
-            display: none;
-        }
-
-        .btn {
-            background: #4caf50;
-            color: #000;
-            border: none;
-            padding: 0.9rem 2.5rem;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
+        .identify-btn {
             width: 100%;
+            padding: 0.9rem;
+            background: var(--accent);
+            color: #0b140b;
+            border: none;
+            border-radius: 10px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.92rem;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 0.02em;
+            transition: background 0.2s;
+        }
+
+        .identify-btn:hover:not(:disabled) { background: #7dc86b; }
+        .identify-btn:disabled { opacity: 0.22; cursor: not-allowed; }
+
+        .status-msg {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.82rem;
+            margin-top: 1rem;
+            min-height: 1.2rem;
+        }
+
+        .error-msg {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            text-align: center;
+            color: #e07070;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+        }
+
+        .results-panel { margin-top: 2rem; display: none; }
+
+        .results-label {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--muted2);
             margin-bottom: 1rem;
-        }
-
-        .btn:hover {
-            background: #45a049;
-        }
-
-        .btn:disabled {
-            background: #2a2a4a;
-            color: #555;
-            cursor: not-allowed;
-        }
-
-        .results {
-            background: #1a1a2e;
-            border: 1px solid #2a2a4a;
-            border-radius: 12px;
-            padding: 1.5rem;
-            text-align: left;
-            display: none;
-        }
-
-        .results h3 {
-            color: #4caf50;
-            margin-bottom: 1rem;
-            font-size: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
         }
 
         .species-row {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 0.5rem 0;
-            border-bottom: 1px solid #2a2a4a;
-        }
-
-        .species-row:last-child {
-            border-bottom: none;
-        }
-
-        .species-name {
-            font-size: 0.9rem;
-        }
-
-        .species-score {
-            font-size: 0.85rem;
-            color: #4caf50;
-            font-weight: 600;
-        }
-
-        .bar {
-            height: 4px;
-            background: #4caf50;
-            border-radius: 2px;
-            margin-top: 0.3rem;
-        }
-
-        .status {
-            color: #888;
-            font-size: 0.85rem;
-            margin-top: 0.5rem;
-        }
-
-        .links {
-            margin-top: 2rem;
-            display: flex;
             gap: 1rem;
-            justify-content: center;
+            padding: 0.85rem 0;
+            border-bottom: 1px solid rgba(30, 46, 30, 0.5);
         }
 
-        .link {
-            color: #888;
-            text-decoration: none;
-            font-size: 0.85rem;
-            border: 1px solid #2a2a4a;
-            padding: 0.4rem 1rem;
-            border-radius: 6px;
-            transition: color 0.2s, border-color 0.2s;
+        .species-row:last-child { border-bottom: none; }
+
+        .species-rank {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.72rem;
+            color: var(--muted2);
+            width: 16px;
+            text-align: right;
+            flex-shrink: 0;
         }
 
-        .link:hover {
-            color: #4caf50;
-            border-color: #4caf50;
+        .species-info { flex: 1; min-width: 0; }
+
+        .species-common {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.92rem;
+            font-weight: 500;
+            color: var(--parchment);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
+
+        .species-sci {
+            font-size: 0.75rem;
+            color: var(--muted);
+            font-style: italic;
+            margin-top: 0.1rem;
+        }
+
+        .species-right { flex-shrink: 0; width: 96px; }
+
+        .bar-bg { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+
+        .bar-fill { height: 100%; background: var(--accent); border-radius: 2px; }
+
+        .bar-pct {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.78rem;
+            color: var(--accent);
+            font-weight: 600;
+            text-align: right;
+            margin-top: 0.25rem;
+        }
+
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 2.5rem 2rem;
+            text-align: center;
+        }
+
+        footer p {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.8rem;
+            color: var(--muted2);
+            line-height: 2;
+        }
+
+        footer a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
+        footer a:hover { color: var(--parchment); }
     </style>
 </head>
-
 <body>
-    <div class="container">
-        <div class="badge">🏆 Top 6% — Kaggle BirdCLEF+ 2026</div>
-        <h1>Bird<span>CLef</span> 2026</h1>
-        <p class="subtitle">Acoustic species identification in the Pantanal · 234 species</p>
 
-        <div class="stats">
-            <div class="stat">
-                <div class="stat-value">226</div>
-                <div class="stat-label">Rank / 4,094</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value">0.949</div>
-                <div class="stat-label">ROC-AUC Score</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value">234</div>
-                <div class="stat-label">Species</div>
-            </div>
-        </div>
+<nav>
+    <div class="logo">AcousticID</div>
+    <div class="nav-links">
+        <a href="#demo">Try it</a>
+        <a href="/docs">API</a>
+        <a href="https://github.com/josaiahsyiem/birdclef-2026" target="_blank">GitHub</a>
+        <a href="https://www.kaggle.com/joesyiem" target="_blank">Kaggle</a>
+    </div>
+</nav>
 
-        <div class="upload-box">
-            <label class="upload-label" for="audioFile">
-                <div class="upload-icon">🎵</div>
-                <div class="upload-text">
-                    <span>Click to upload</span> a 60-second bird audio file<br>
-                    Supports .ogg, .wav, .mp3
-                </div>
-                <div class="filename" id="filename"></div>
-            </label>
-            <input type="file" id="audioFile" accept=".ogg,.wav,.mp3">
-        </div>
+<section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-trees"></div>
+    <div class="waveform" id="waveform"></div>
+    <p class="hero-eyebrow">Pantanal Acoustic Monitoring</p>
+    <h1>How do you protect an ecosystem<br>you <strong>cannot fully see?</strong></h1>
+    <p class="hero-sub">
+        One way is to listen. Upload a passive acoustic recording from the Pantanal and this tool identifies the wildlife species present within seconds.
+    </p>
+    <div class="hero-actions">
+        <a href="#demo" class="btn-primary">Upload a recording</a>
+        <a href="#story" class="btn-ghost">Learn more</a>
+    </div>
+</section>
 
-        <button class="btn" id="predictBtn" disabled>Detect Species</button>
-
-        <div class="results" id="results">
-            <h3>Detected Species</h3>
-            <div id="speciesList"></div>
-        </div>
-
-        <p class="status" id="status"></p>
-
-        <div class="links">
-            <a href="/docs" class="link">📖 API Docs</a>
-            <a href="https://github.com/josaiahsyiem/birdclef-2026" class="link">💻 GitHub</a>
-            <a href="https://www.kaggle.com/joesyiem" class="link">🏅 Kaggle</a>
-        </div>
+<section class="story" id="story">
+    <p class="section-eyebrow">The Challenge</p>
+    <h2>One of Earth's most biodiverse places is going largely unheard</h2>
+    <div class="story-body">
+        <p>
+            The Pantanal stretches across 150,000 square kilometres of South America and is home to more than 650 bird species, countless amphibians, reptiles, and mammals. Yet much of it has never been systematically monitored. Seasonal flooding, wildfires, agricultural expansion, and remote terrain make traditional fieldwork slow and expensive.
+        </p>
+        <p>
+            Passive acoustic monitoring changes the equation. Place a recorder in the field and let it listen. The recordings capture the soundscape of an entire ecological community over hours or days. The challenge then becomes making sense of what was heard, at scale, without a biologist present for every file.
+        </p>
+        <p>
+            This tool does exactly that. Upload a 60-second recording and a deep learning pipeline identifies which species were vocalising, giving conservationists a faster path from data to understanding.
+        </p>
     </div>
 
-    <script>
-        const fileInput = document.getElementById('audioFile');
-        const predictBtn = document.getElementById('predictBtn');
-        const filename = document.getElementById('filename');
-        const results = document.getElementById('results');
-        const speciesList = document.getElementById('speciesList');
-        const status = document.getElementById('status');
+    <div class="story-cards">
+        <div class="story-card">
+            <div class="card-icon">🎙️</div>
+            <h3>Passive Acoustic Monitoring</h3>
+            <p>Recorders placed across the Pantanal capture 60-second soundscapes containing the calls of birds, frogs, insects, and mammals living nearby.</p>
+        </div>
+        <div class="story-card">
+            <div class="card-icon">🌿</div>
+            <h3>Biodiversity Tracking</h3>
+            <p>Knowing which species are present, and how their populations change over time, gives researchers early signals of ecosystem stress or recovery.</p>
+        </div>
+        <div class="story-card">
+            <div class="card-icon">🔊</div>
+            <h3>234 Species</h3>
+            <p>The model covers birds, amphibians, insects, mammals, and reptiles across the Pantanal, identified from their vocalisations alone.</p>
+        </div>
+        <div class="story-card">
+            <div class="card-icon">⚡</div>
+            <h3>Seconds, Not Hours</h3>
+            <p>What once required manual review by trained biologists now runs automatically, making large-scale monitoring genuinely practical.</p>
+        </div>
+    </div>
+</section>
 
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files.length > 0) {
-                filename.textContent = fileInput.files[0].name;
-                filename.style.display = 'block';
-                predictBtn.disabled = false;
-            }
-        });
+<section class="pipeline">
+    <div class="pipeline-inner">
+        <p class="section-eyebrow">How it works</p>
+        <h2>From raw audio to species identifications</h2>
+        <p>A five-stage deep learning pipeline processes each recording. The whole process takes roughly 20 to 30 seconds.</p>
+        <div class="steps">
+            <div class="step">
+                <div class="step-dot">1</div>
+                <div class="step-title">Audio Input</div>
+                <div class="step-desc">60s recording split into twelve 5-second windows</div>
+            </div>
+            <div class="step">
+                <div class="step-dot">2</div>
+                <div class="step-title">Perch v2</div>
+                <div class="step-desc">Google's model extracts 1536-dimensional audio embeddings</div>
+            </div>
+            <div class="step">
+                <div class="step-dot">3</div>
+                <div class="step-title">ProtoSSM</div>
+                <div class="step-desc">State Space Model captures temporal patterns across windows</div>
+            </div>
+            <div class="step">
+                <div class="step-dot">4</div>
+                <div class="step-title">ResidualSSM</div>
+                <div class="step-desc">A correction layer refines the initial predictions</div>
+            </div>
+            <div class="step">
+                <div class="step-dot">5</div>
+                <div class="step-title">Results</div>
+                <div class="step-desc">Species ranked by detection confidence</div>
+            </div>
+        </div>
+    </div>
+</section>
 
-        predictBtn.addEventListener('click', async () => {
-            const file = fileInput.files[0];
-            if (!file) return;
+<section class="demo" id="demo">
+    <div class="demo-header">
+        <p class="section-eyebrow">Live Demo</p>
+        <h2>Upload a recording</h2>
+        <p>Works best with 60-second OGG or WAV recordings from tropical wetland habitats. MP3 files are also supported.</p>
+    </div>
 
-            predictBtn.disabled = true;
-            predictBtn.textContent = 'Analyzing...';
-            status.textContent = 'Running inference pipeline...';
-            results.style.display = 'none';
+    <div class="upload-card">
+        <label for="audioFile">
+            <div class="upload-zone" id="uploadZone">
+                <div class="upload-icon">🎵</div>
+                <p><strong>Choose a file</strong> to upload</p>
+                <p>OGG &nbsp; WAV &nbsp; MP3</p>
+                <div class="upload-fname" id="uploadFname"></div>
+            </div>
+        </label>
+        <input type="file" id="audioFile" accept=".ogg,.wav,.mp3">
 
-            const formData = new FormData();
-            formData.append('file', file);
+        <button class="identify-btn" id="identifyBtn" disabled>Identify Species</button>
 
-            try {
-                const response = await fetch('/predict', {
-                    method: 'POST',
-                    body: formData,
-                });
-                const data = await response.json();
+        <div class="status-msg" id="statusMsg"></div>
+        <div class="error-msg" id="errorMsg"></div>
 
-                if (data.top_species && data.top_species.length > 0) {
-                    speciesList.innerHTML = data.top_species.map(s => `
-                        <div class="species-row">
-                            <div>
-                                <div class="species-name">${s.species}</div>
-                                <div class="bar" style="width: ${s.confidence * 100}%"></div>
-                            </div>
-                            <div class="species-score">${(s.confidence * 100).toFixed(1)}%</div>
+        <div class="results-panel" id="resultsPanel">
+            <div class="results-label">Detected Species</div>
+            <div id="speciesList"></div>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <p>
+        Pantanal acoustic species identification &nbsp;|&nbsp;
+        <a href="https://github.com/josaiahsyiem/birdclef-2026" target="_blank">GitHub</a> &nbsp;
+        <a href="https://www.kaggle.com/joesyiem" target="_blank">Kaggle</a> &nbsp;
+        <a href="/docs" target="_blank">API Docs</a>
+    </p>
+</footer>
+
+<script>
+    const wf = document.getElementById('waveform');
+    [20,35,55,40,70,50,80,60,45,75,55,38,65,48,30,58,72,42,62,35,50,68,44,30].forEach((h, i) => {
+        const bar = document.createElement('div');
+        bar.className = 'waveform-bar';
+        bar.style.height = h + 'px';
+        bar.style.animationDelay = (i * 0.07) + 's';
+        wf.appendChild(bar);
+    });
+
+    const fileInput    = document.getElementById('audioFile');
+    const identifyBtn  = document.getElementById('identifyBtn');
+    const uploadZone   = document.getElementById('uploadZone');
+    const uploadFname  = document.getElementById('uploadFname');
+    const statusMsg    = document.getElementById('statusMsg');
+    const errorMsg     = document.getElementById('errorMsg');
+    const resultsPanel = document.getElementById('resultsPanel');
+    const speciesList  = document.getElementById('speciesList');
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            uploadFname.textContent = fileInput.files[0].name;
+            uploadZone.classList.add('active');
+            identifyBtn.disabled = false;
+            resultsPanel.style.display = 'none';
+            errorMsg.textContent = '';
+        }
+    });
+
+    identifyBtn.addEventListener('click', async () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        identifyBtn.disabled = true;
+        identifyBtn.textContent = 'Analysing...';
+        statusMsg.textContent = 'Running inference pipeline. This takes around 20 to 30 seconds.';
+        resultsPanel.style.display = 'none';
+        errorMsg.textContent = '';
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/predict', { method: 'POST', body: formData });
+            const data = await response.json();
+
+            if (data.error) {
+                errorMsg.textContent = 'Error: ' + data.error;
+            } else if (data.top_species && data.top_species.length > 0) {
+                speciesList.innerHTML = data.top_species.map((s, idx) => `
+                    <div class="species-row">
+                        <div class="species-rank">${idx + 1}</div>
+                        <div class="species-info">
+                            <div class="species-common">${s.species}</div>
+                            ${s.scientific ? '<div class="species-sci">' + s.scientific + '</div>' : ''}
                         </div>
-                    `).join('');
-                } else {
-                    speciesList.innerHTML = `<p style="color:#888">${data.message || 'No species detected.'}</p>`;
-                }
-
-                results.style.display = 'block';
-                status.textContent = '';
-            } catch (err) {
-                status.textContent = 'Error: ' + err.message;
+                        <div class="species-right">
+                            <div class="bar-bg">
+                                <div class="bar-fill" style="width:${Math.round(s.confidence * 100)}%"></div>
+                            </div>
+                            <div class="bar-pct">${(s.confidence * 100).toFixed(1)}%</div>
+                        </div>
+                    </div>
+                `).join('');
+                resultsPanel.style.display = 'block';
+            } else {
+                errorMsg.textContent = data.message || 'No species detected above the confidence threshold.';
             }
+            statusMsg.textContent = '';
+        } catch (err) {
+            errorMsg.textContent = 'Connection error: ' + err.message;
+            statusMsg.textContent = '';
+        }
 
-            predictBtn.disabled = false;
-            predictBtn.textContent = 'Detect Species';
-        });
-    </script>
+        identifyBtn.disabled = false;
+        identifyBtn.textContent = 'Identify Species';
+    });
+</script>
+
 </body>
-
 </html>

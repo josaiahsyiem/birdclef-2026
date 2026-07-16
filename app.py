@@ -79,7 +79,7 @@ async def startup_event():
 @app.get("/", response_class=HTMLResponse)
 def root():
     html_path = Path("static/index.html")
-    return HTMLResponse(content=html_path.read_text())
+    return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
 
 
 @app.get("/health")
