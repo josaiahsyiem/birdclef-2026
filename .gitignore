@@ -216,3 +216,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Model weights (too large for GitHub)
+weights/*.onnx
+weights/*.pt
+weights/*.pkl
+weights/*.npz
