@@ -2,7 +2,8 @@
 
 > **226th place out of 4,094 teams (Top 6%)** | Public Leaderboard Score: **0.949**  
 > Kaggle Competition: [BirdCLEF+ 2026](https://www.kaggle.com/competitions/birdclef-2026)  
-> Kaggle: (https://www.kaggle.com/joesyiem)
+> Kaggle: [joesyiem](https://www.kaggle.com/joesyiem)  
+> **Live Demo:** [birdclef-2026.onrender.com](https://birdclef-2026.onrender.com)
 
 ---
 
