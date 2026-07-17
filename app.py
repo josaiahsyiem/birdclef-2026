@@ -44,11 +44,44 @@ def load_primary_labels():
     return [f"species_{i}" for i in range(234)]
 
 
+def download_weights():
+    """Download model weights from Hugging Face Hub if not present."""
+    from huggingface_hub import hf_hub_download
+    import os
+
+    repo_id = "josaiahsyiem/birdclef-2026-weights"
+    files = [
+        "perch_v2_no_dft.onnx",
+        "proto_ssm_74.pt",
+        "residual_ssm_best.pt",
+        "site2i_74.json",
+        "taxonomy.csv",
+        "sample_submission.csv",
+    ]
+
+    WEIGHTS_DIR.mkdir(parents=True, exist_ok=True)
+
+    for filename in files:
+        dest = WEIGHTS_DIR / filename
+        if not dest.exists():
+            print(f"Downloading {filename}...")
+            hf_hub_download(
+                repo_id=repo_id,
+                filename=filename,
+                local_dir=str(WEIGHTS_DIR),
+            )
+            print(f"Downloaded {filename}")
+        else:
+            print(f"Found cached {filename}")
+
+
 @app.on_event("startup")
 async def startup_event():
     """Load all models at startup."""
     global MODELS, PERCH_SESSION, PERCH_INPUT_NAME, PERCH_OUTPUT_MAP, PRIMARY_LABELS
 
+    print("Downloading weights from Hugging Face...")
+    download_weights()
     print("Loading models...")
 
     try:
