@@ -222,3 +222,7 @@ weights/*.onnx
 weights/*.pt
 weights/*.pkl
 weights/*.npz
+# Local data and small weight files
+data/
+weights/*.csv
+weights/*.json
