@@ -73,7 +73,7 @@ Raw Audio (60s OGG)
 
 ## Models
 
-### Model_21
+### Distilled Spectrogram Detector
 
 Combines a distilled EfficientNet-B0 sound event detector with a ProtoSSM temporal model.
 
@@ -94,7 +94,7 @@ Combines a distilled EfficientNet-B0 sound event detector with a ProtoSSM tempor
 
 ---
 
-### Model_52
+### Sequence Model Variant
 
 An intermediate output from the ProtoSSM training pipeline, used to increase ensemble diversity. Predictions are saved separately as `subm_52p.csv`.
 
@@ -102,7 +102,7 @@ An intermediate output from the ProtoSSM training pipeline, used to increase ens
 
 ---
 
-### Model_74
+### Perch Embedding Pipeline
 
 The primary model, contributing the majority of the final ensemble score.
 
@@ -284,18 +284,7 @@ Core libraries:
 
 See `requirements.txt` for the complete list.
 
----
 
-## Acknowledgements
-
-This solution builds on ideas and open-source work shared by the BirdCLEF community:
-
-* Tucker Arrants
-* hideyukizushi (yukiZ)
-* Yaroslav Kholmirzayev
-* F.A. Nina
-
----
 
 ## License
 
