@@ -289,17 +289,6 @@ See `requirements.txt` for the complete list.
 
 ---
 
-## Acknowledgements
-
-This solution builds on ideas and open-source work shared by the BirdCLEF community:
-
-* Tucker Arrants
-* hideyukizushi (yukiZ)
-* Yaroslav Kholmirzayev
-* F.A. Nina
-
----
-
 ## License
 
 Released under the MIT License. See the `LICENSE` file for details.
