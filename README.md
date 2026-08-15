@@ -1,28 +1,30 @@
-# BirdCLEF+ 2026: Acoustic Species Identification in the Pantanal
+# BirdCLEF+ 2026 — Acoustic Species Identification in the Pantanal
 
-> **226th place out of 4,094 teams (Top 6%)** | Public Leaderboard Score: **0.949**  
-> Kaggle Competition: [BirdCLEF+ 2026](https://www.kaggle.com/competitions/birdclef-2026)  
-> Kaggle: [joesyiem](https://www.kaggle.com/joesyiem)  
-> **Live Demo:** [birdclef-2026.onrender.com](https://birdclef-2026.onrender.com)
+> **226th place out of 4,094 teams (Top 6%)** | Public Leaderboard Score: **0.949**
+> Kaggle Competition: [BirdCLEF+ 2026](https://www.kaggle.com/competitions/birdclef-2026)
+> Kaggle: [joesyiem](https://www.kaggle.com/joesyiem)
+> **Live Demo:** [birdclef-detector on Azure](https://birdclef-detector-e8c9fthzc4a5c4da.centralindia-01.azurewebsites.net)
 
 ---
 
 ## Overview
 
-BirdCLEF+ 2026 is a bioacoustics machine learning competition hosted on Kaggle. The objective is to identify **234 wildlife species** (birds, amphibians, insects, mammals, and reptiles) from passive acoustic recordings collected in the **Pantanal** region of South America. Each 60-second audio recording is divided into twelve 5-second segments, and the model predicts the probability of every species for each segment.
+BirdCLEF+ 2026 is a bioacoustics machine learning competition hosted on Kaggle. The objective is to identify **234 wildlife species** across **five taxonomic classes** (Aves, Amphibia, Insecta, Mammalia, Reptilia) from passive acoustic recordings collected in the **Pantanal** region of South America. Each 60-second recording is divided into twelve 5-second segments, and the model predicts the probability of every species for each segment.
 
-This repository contains my complete competition solution, including the model architectures, training pipeline, post-processing methods, and ensemble strategy. The original competition notebook has been cleaned, modularized, and documented to make the project easier to understand, reproduce, and extend.
+This repository contains the complete competition solution, including model architectures, training pipeline, post-processing methods, and ensemble strategy. The original competition notebook has been cleaned, modularized, and documented, then deployed as a containerized inference service.
 
 ---
 
 ## Result
 
-| Metric                   | Value                  |
-| ------------------------ | ---------------------- |
-| Public Leaderboard Score | **0.949**              |
-| Final Rank               | **226 / 4,094**        |
-| Percentile               | **Top 6%**             |
-| Evaluation Metric        | Macro-averaged ROC-AUC |
+| Metric | Value |
+| --- | --- |
+| Public Leaderboard Score | **0.949** |
+| Final Rank | **226 / 4,094** |
+| Percentile | **Top 6%** |
+| Evaluation Metric | Macro-averaged ROC-AUC |
+| Species | 234 across 5 taxonomic classes |
+| Dataset Size | 16.14 GB (46,200+ files) |
 
 ---
 
@@ -32,38 +34,38 @@ The final submission is a **three-model ensemble** with taxonomy-aware post-proc
 
 ```text
 Raw Audio (60s OGG)
-        │
-        ▼
+        |
+        v
   5s Window Segmentation (12 windows per file)
-        │
-        ├──────────────────────────────────────────────────┐
-        │                                                  │
-        ▼                                                  ▼
+        |
+        +--------------------------------------------------+
+        |                                                  |
+        v                                                  v
   Perch v2 Backbone                          Mel Spectrogram
   (Google, frozen)                           (256 mels, 32kHz)
-        │                                                  │
-        ├── 1536-dim embeddings                            │
-        ├── 234-class logits                               ▼
-        │                                       EfficientNet-B0 SED
-        ├──────────────┬───────────────┐         (Distilled)
-        │              │               │
-        ▼              ▼               ▼
+        |                                                  |
+        +-- 1536-dim embeddings                            |
+        +-- 234-class logits                               v
+        |                                       EfficientNet-B0 SED
+        +--------------+---------------+         (Distilled)
+        |              |               |
+        v              v               v
    Model_21        Model_52        Model_74
   (ProtoSSM)     (Intermediate)   (Main Model)
-        │              │               │
-        ▼              ▼               ▼
+        |              |               |
+        v              v               v
    subm_21.csv   subm_52p.csv    subm_74.csv
-        │              │               │
-        └──────────────┴───────────────┘
-                       │
-                       ▼
+        |              |               |
+        +--------------+---------------+
+                       |
+                       v
                  Weighted Ensemble
              [0.014, 0.021, 0.965]
-                       │
-                       ▼
+                       |
+                       v
         Taxonomy-aware Post-processing
-                       │
-                       ▼
+                       |
+                       v
                 Final submission.csv
 ```
 
@@ -73,58 +75,56 @@ Raw Audio (60s OGG)
 
 ### Model_21
 
-This model combines a distilled EfficientNet-B0 sound event detector with a ProtoSSM temporal model.
+Combines a distilled EfficientNet-B0 sound event detector with a ProtoSSM temporal model.
 
 **Architecture**
 
 * EfficientNet-B0 (`tf_efficientnet_b0.ns_jft_in1k`) trained on 256-bin mel spectrograms sampled at 32 kHz
 * Knowledge distillation from frozen **Perch v2** embeddings (1536 dimensions) using MSE loss
-* EfficientNet encoder followed by **ProtoSSM v5**, which models temporal relationships using four state-space layers with cross-attention (`d_model=320`, `d_state=32`)
+* EfficientNet encoder followed by **ProtoSSM v5**, modelling temporal relationships via state-space layers with cross-attention
 
 **Training**
 
-* 25 training epochs
-* 5-fold Stratified K-Fold cross-validation
+* 25 epochs, 5-fold Stratified K-Fold cross-validation
 * Focal loss with label smoothing
 * Stochastic Weight Averaging (SWA)
-* MixUp augmentation
-* SpecAugment
+* MixUp and SpecAugment augmentation
 
-**Ensemble weight:** **0.014**
+**Ensemble weight:** 0.014 | **Standalone LB:** 0.928
 
 ---
 
 ### Model_52
 
-Model_52 is an intermediate output from the ProtoSSM training pipeline used to increase ensemble diversity. Its predictions are saved separately as `subm_52p.csv`.
+An intermediate output from the ProtoSSM training pipeline, used to increase ensemble diversity. Predictions are saved separately as `subm_52p.csv`.
 
-**Ensemble weight:** **0.021**
+**Ensemble weight:** 0.021 | **Standalone LB:** 0.949
 
 ---
 
 ### Model_74
 
-Model_74 is the primary model and contributes the majority of the final ensemble score.
+The primary model, contributing the majority of the final ensemble score.
 
 **Architecture**
 
 * Frozen **Perch v2** backbone for extracting 1536-dimensional audio embeddings
-* PCA for feature reduction
-* Class-specific MLP probes
-* ProtoSSM v2 with ResidualSSM for temporal refinement
+* PCA reduction for feature compression
+* Per-class MLP probes (256 to 128 hidden layers for frequent classes, 128 to 64 for rare)
+* ProtoSSM v2 with ResidualSSM correction for temporal refinement
+* Shrinkage-weighted site and hour prior tables with circular Gaussian smoothing (sigma = 1.5h)
 
 **Post-processing pipeline**
 
-* Noise suppression for inconsistent predictions
-* Temporal smoothing using a fat-tailed t-distribution kernel with a 35-second context window
-* Preservation of strong SED detections
-* Sonotype mirroring for acoustically similar species
-* Adaptive thresholding for rare amphibian, mammal, and reptile classes
+1. Noise suppression for inconsistent predictions
+2. Temporal smoothing using a fat-tailed t-distribution kernel with a 35-second context window
+3. Preservation of strong SED detections
+4. Sonotype mirroring for acoustically identical species
+5. Adaptive thresholding for rare amphibian, mammal, and reptile classes
 
-The final prediction from this model is obtained by combining ProtoSSM and distilled SED outputs using a weighted blend of **0.60** and **0.40**.
+Final prediction combines ProtoSSM and distilled SED outputs using a rank-normalised weighted blend of **0.60 / 0.40**.
 
-**Ensemble weight:** **0.965**
-
+**Ensemble weight:** 0.965 | **Standalone LB:** 0.949
 
 ---
 
@@ -132,19 +132,18 @@ The final prediction from this model is obtained by combining ProtoSSM and disti
 
 ### Taxonomy-aware smoothing
 
-After combining the predictions from the three models, a taxonomy-aware smoothing step is applied to improve consistency across related species.
+After combining predictions from the three models, taxonomy-aware smoothing improves consistency across related species.
 
-* **Genus-level smoothing (`α = 0.15`)**
-  Species belonging to the same genus have their prediction scores adjusted slightly toward the genus average. Since closely related species often share similar vocal characteristics, this helps reduce noisy predictions.
+* **Genus-level smoothing (alpha = 0.15)** — species in the same genus have prediction scores adjusted toward the genus mean, since closely related species share vocal characteristics and habitat
+* **Class-level smoothing (alpha = 0.05)** — lighter smoothing across broader taxonomic groups
 
-* **Class-level smoothing (`α = 0.05`)**
-  A lighter smoothing step is applied across broader taxonomic groups such as birds, amphibians, mammals, and reptiles.
+Formula: `smoothed = (1 - alpha) * original + alpha * group_mean`
 
-This approach was inspired by several high-performing public BirdCLEF solutions and consistently improved the stability of the final predictions.
+This approach was identified by analysing high-performing public solutions and consistently improved prediction stability.
 
 ### Ensemble blending
 
-The outputs from the three models are combined using weighted blending. Since Model_74 produced the strongest individual performance, it receives most of the ensemble weight (0.965), while Model_21 and Model_52 provide complementary predictions.
+Outputs from the three models are converted to percentile ranks (normalising for differing probability calibrations) and combined via weighted blending. Model_74 receives most of the ensemble weight (0.965) given its strongest individual performance.
 
 ---
 
@@ -153,17 +152,74 @@ The outputs from the three models are combined using weighted blending. Since Mo
 ```text
 birdclef-2026/
 ├── configs/
+│   └── ensemble_config.yaml     # Weights, paths, hyperparameters
 ├── docs/
-├── notebooks/
+│   └── pipeline.md              # Detailed pipeline documentation
 ├── scripts/
+│   ├── train_model21.py         # Train EfficientNet SED + ProtoSSM
+│   ├── train_model74.py         # Train Perch + ProtoSSM pipeline
+│   └── predict.py               # Full ensemble inference
 ├── src/
-├── .gitignore
-├── LICENSE
-├── README.md
-└── requirements.txt
+│   ├── models/                  # Model architectures
+│   ├── postprocessing/          # TAX_SMOOTHING + temporal gates
+│   ├── ensemble.py              # Blending logic
+│   ├── inference.py             # Deployment inference pipeline
+│   └── utils.py                 # Shared utilities
+├── static/
+│   └── index.html               # Web frontend
+├── app.py                       # FastAPI server
+├── Dockerfile                   # Container definition
+├── requirements.txt
+└── README.md
 ```
 
-The repository is organized into separate modules for training, inference, post-processing, model definitions, and documentation, making it easier to understand and extend than the original competition notebook.
+---
+
+## Deployment
+
+The inference service is containerized and deployed on **Microsoft Azure App Service**.
+
+| Component | Details |
+| --- | --- |
+| **Container Registry** | Docker Hub — `josaiahsyiem/birdclef-2026:latest` |
+| **Hosting** | Azure App Service (Linux, Container mode, Central India) |
+| **Model Weights** | [Hugging Face Hub](https://huggingface.co/josaiahsyiem/birdclef-2026-weights) |
+| **API Framework** | FastAPI with gunicorn and uvicorn workers |
+| **Base Image** | `python:3.10-slim` with libsndfile1 and ffmpeg |
+
+Model weights are hosted on Hugging Face Hub rather than bundled into the image, and downloaded at container startup via `huggingface_hub.hf_hub_download`. Weight files:
+
+* `perch_v2_no_dft.onnx` (413 MB) — Perch v2 backbone in ONNX format
+* `proto_ssm_74.pt` (2.9 MB) — ProtoSSM weights
+* `residual_ssm_best.pt` (1.8 MB) — ResidualSSM weights
+* `site2i_74.json` — site-to-index mapping
+* `taxonomy.csv` — species taxonomy for common and scientific name lookup
+* `sample_submission.csv` — defines the 234 output columns
+
+### Inference API
+
+| Endpoint | Method | Description |
+| --- | --- | --- |
+| `/` | GET | Web interface |
+| `/health` | GET | Model load status |
+| `/docs` | GET | Interactive OpenAPI documentation |
+| `/predict` | POST | Audio upload, returns top species with confidences |
+
+### Inference pipeline
+
+```text
+audio upload -> librosa load (32kHz mono) -> 12 x 5s windows
+-> Perch v2 ONNX -> 1536-dim embeddings
+-> ProtoSSM -> ResidualSSM (correction weight 0.35)
+-> sigmoid -> max across windows -> top-k species
+-> taxonomy lookup for common and scientific names
+```
+
+### Deployment note
+
+The current Azure App Service Plan is **Basic B1 (1.75 GB RAM)**. Loading the ONNX backbone alongside PyTorch models approaches this limit, and inference under load may exhaust available memory. Scaling the plan to **B2 (3.5 GB RAM)** resolves this. The frontend and API remain fully operational on B1.
+
+An earlier deployment exists on Render (`render.yaml` and `Procfile` retained in the repository), but its 512 MB free tier is insufficient to load the model weights. Azure is the active deployment.
 
 ---
 
@@ -172,7 +228,7 @@ The repository is organized into separate modules for training, inference, post-
 ### Requirements
 
 * Python 3.10 or later
-* CUDA-enabled GPU (8 GB VRAM or higher recommended)
+* CUDA-enabled GPU (8 GB VRAM or higher recommended for training)
 * BirdCLEF+ 2026 competition dataset
 * Perch v2 model weights
 
@@ -184,58 +240,63 @@ cd birdclef-2026
 pip install -r requirements.txt
 ```
 
-Update the configuration file with the locations of your datasets and model checkpoints before training or inference.
+Update `configs/ensemble_config.yaml` with your dataset and checkpoint paths before training or inference.
 
-Training and inference scripts are provided in the `scripts/` directory.
+### Running locally
+
+```bash
+python app.py          # http://localhost:7860
+```
+
+### Running via Docker
+
+```bash
+docker build -t birdclef-2026 .
+docker run -p 8000:8000 birdclef-2026
+```
 
 ---
 
 ## Lessons Learned
 
-Some of the biggest takeaways from this competition were:
+1. **Strong baselines matter.** High-performing public notebooks are usually carefully tuned; changing parameters without clear justification consistently reduced performance (0.949 to 0.945).
 
-1. **Strong baselines matter.** Public notebooks that perform well are usually carefully tuned, and changing parameters without a clear reason often reduced performance.
+2. **Not every idea improves the model.** Generating pseudo-labels from Perch embeddings to retrain another Perch-based model introduces no new signal — the training loop becomes circular.
 
-2. **Not every idea improves the model.** Some experiments, such as generating pseudo-labels from Perch embeddings and retraining another Perch-based model, did not provide meaningful gains.
+3. **Understanding successful solutions is valuable.** Analysing techniques common to high-ranking public notebooks identified taxonomy-aware post-processing as the highest-impact change.
 
-3. **Understanding successful solutions is valuable.** Studying techniques used by high-ranking public notebooks helped identify ideas that were worth exploring, including taxonomy-aware post-processing.
-
-4. **Perch v2 is a powerful feature extractor.** Using frozen Perch embeddings with lightweight task-specific models proved more effective than training a CNN from scratch for this competition.
+4. **Perch v2 is a powerful feature extractor.** Frozen Perch embeddings with lightweight task-specific heads outperformed training a CNN from scratch, reflecting the value of large-scale pretraining (10,000+ species).
 
 ---
 
 ## Dependencies
 
-This project primarily uses:
+Core libraries:
 
-* PyTorch
-* TensorFlow
-* ONNX Runtime
-* timm
-* torchaudio
-* librosa
-* scikit-learn
-* NumPy
-* SciPy
-* pandas
+* PyTorch — ProtoSSM, ResidualSSM, EfficientNet SED
+* ONNX Runtime — Perch v2 inference
+* timm — EfficientNet-B0 backbone
+* librosa, torchaudio, soundfile — audio processing
+* scikit-learn — MLP probes, PCA, cross-validation, isotonic calibration
+* NumPy, SciPy, pandas — numerical and tabular processing
+* FastAPI, uvicorn, gunicorn — inference service
+* huggingface-hub — model weight distribution
 
-See `requirements.txt` for the complete list of dependencies.
+See `requirements.txt` for the complete list.
 
 ---
 
 ## Acknowledgements
 
-This solution builds upon ideas and open-source work shared by the BirdCLEF community. In particular, I would like to acknowledge:
+This solution builds on ideas and open-source work shared by the BirdCLEF community:
 
 * Tucker Arrants
 * hideyukizushi (yukiZ)
 * Yaroslav Kholmirzayev
 * F.A. Nina
 
-
 ---
 
 ## License
 
-This project is released under the MIT License. See the `LICENSE` file for more information.
-
+Released under the MIT License. See the `LICENSE` file for details.
