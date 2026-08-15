@@ -94,7 +94,7 @@ def load_perch_session(onnx_path: str):
     """
     import onnxruntime as ort
     so = ort.SessionOptions()
-    so.intra_op_num_threads = 2
+    so.intra_op_num_threads = 1
     session = ort.InferenceSession(
         str(onnx_path),
         sess_options=so,
