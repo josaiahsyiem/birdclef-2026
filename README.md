@@ -4,6 +4,7 @@
 > Kaggle Competition: [BirdCLEF+ 2026](https://www.kaggle.com/competitions/birdclef-2026)
 > Kaggle: [joesyiem](https://www.kaggle.com/joesyiem)
 > **Live Demo:** [birdclef-detector on Azure](https://birdclef-detector-e8c9fthzc4a5c4da.centralindia-01.azurewebsites.net)
+> **Video Demo:** https://studio.youtube.com/video/6w7aT5A-bJo/edit
 
 ---
 
