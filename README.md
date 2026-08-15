@@ -4,7 +4,7 @@
 > Kaggle Competition: [BirdCLEF+ 2026](https://www.kaggle.com/competitions/birdclef-2026)
 > Kaggle: [joesyiem](https://www.kaggle.com/joesyiem)
 > **Live Demo:** [birdclef-detector on Azure](https://birdclef-detector-e8c9fthzc4a5c4da.centralindia-01.azurewebsites.net)
-> **Video Demo:** [[https://studio.youtube.com/video/6w7aT5A-bJo/edit](https://youtu.be/6w7aT5A-bJo?si=0wfoSxJpjtB59Co_)](https://youtu.be/nFpv6Mb8TXQ?si=MrdJENA3Tl0KkYfy)
+> **Video Walkthrough:** [Watch on YouTube](https://youtu.be/nFpv6Mb8TXQ)
 
 ---
 
@@ -12,7 +12,7 @@
 
 BirdCLEF+ 2026 is a bioacoustics machine learning competition hosted on Kaggle. The objective is to identify **234 wildlife species** across **five taxonomic classes** (Aves, Amphibia, Insecta, Mammalia, Reptilia) from passive acoustic recordings collected in the **Pantanal** region of South America. Each 60-second recording is divided into twelve 5-second segments, and the model predicts the probability of every species for each segment.
 
-This repository contains the complete competition solution, including model architectures, training pipeline, post-processing methods, and ensemble strategy. The original competition notebook has been cleaned, modularized, and documented, then deployed as a containerized inference service.
+This repository contains the complete competition solution — model architectures, training pipeline, post-processing methods, and ensemble strategy — refactored from the original competition notebook into a modular package and deployed as a containerized inference service.
 
 ---
 
@@ -51,17 +51,14 @@ Raw Audio (60s OGG)
         +--------------+---------------+         (Distilled)
         |              |               |
         v              v               v
-   Model_21        Model_52        Model_74
-  (ProtoSSM)     (Intermediate)   (Main Model)
-        |              |               |
-        v              v               v
-   subm_21.csv   subm_52p.csv    subm_74.csv
+  Perch Embedding  Sequence Model   Distilled Spectrogram
+     Pipeline         Variant             Detector
+      (0.965)         (0.021)              (0.014)
         |              |               |
         +--------------+---------------+
                        |
                        v
-                 Weighted Ensemble
-             [0.014, 0.021, 0.965]
+              Rank-normalised Ensemble
                        |
                        v
         Taxonomy-aware Post-processing
@@ -74,15 +71,49 @@ Raw Audio (60s OGG)
 
 ## Models
 
-### Distilled Spectrogram Detector
+### Perch Embedding Pipeline — primary model
 
-Combines a distilled EfficientNet-B0 sound event detector with a ProtoSSM temporal model.
+Contributes the majority of the final ensemble score.
 
 **Architecture**
 
-* EfficientNet-B0 (`tf_efficientnet_b0.ns_jft_in1k`) trained on 256-bin mel spectrograms sampled at 32 kHz
+* Frozen **Perch v2** backbone extracting 1536-dimensional audio embeddings
+* PCA reduction for feature compression
+* Per-class MLP probes (256 to 128 hidden layers for frequent classes, 128 to 64 for rare)
+* ProtoSSM with ResidualSSM correction for temporal refinement
+* Shrinkage-weighted site and hour prior tables with circular Gaussian smoothing (sigma = 1.5h)
+
+**Post-processing pipeline**
+
+1. Noise suppression for inconsistent predictions
+2. Temporal smoothing using a fat-tailed t-distribution kernel with a 35-second context window
+3. Preservation of strong spectrogram-detector detections
+4. Sonotype mirroring for acoustically identical species
+5. Adaptive thresholding for rare amphibian, mammal, and reptile classes
+
+Final prediction combines the sequence model and spectrogram detector outputs using a rank-normalised weighted blend of **0.60 / 0.40**.
+
+**Ensemble weight:** 0.965 | **Standalone LB:** 0.949
+
+---
+
+### Sequence Model Variant
+
+An intermediate checkpoint from the sequence-model training pipeline, captured before the final blend and retained for ensemble diversity.
+
+**Ensemble weight:** 0.021 | **Standalone LB:** 0.949
+
+---
+
+### Distilled Spectrogram Detector
+
+Combines a distilled EfficientNet-B0 sound event detector with a temporal sequence model.
+
+**Architecture**
+
+* EfficientNet-B0 (`tf_efficientnet_b0.ns_jft_in1k`) trained on 256-bin mel spectrograms at 32 kHz
 * Knowledge distillation from frozen **Perch v2** embeddings (1536 dimensions) using MSE loss
-* EfficientNet encoder followed by **ProtoSSM v5**, modelling temporal relationships via state-space layers with cross-attention
+* EfficientNet encoder followed by a state-space temporal model with cross-attention
 
 **Training**
 
@@ -92,40 +123,6 @@ Combines a distilled EfficientNet-B0 sound event detector with a ProtoSSM tempor
 * MixUp and SpecAugment augmentation
 
 **Ensemble weight:** 0.014 | **Standalone LB:** 0.928
-
----
-
-### Sequence Model Variant
-
-An intermediate output from the ProtoSSM training pipeline, used to increase ensemble diversity. Predictions are saved separately as `subm_52p.csv`.
-
-**Ensemble weight:** 0.021 | **Standalone LB:** 0.949
-
----
-
-### Perch Embedding Pipeline
-
-The primary model, contributing the majority of the final ensemble score.
-
-**Architecture**
-
-* Frozen **Perch v2** backbone for extracting 1536-dimensional audio embeddings
-* PCA reduction for feature compression
-* Per-class MLP probes (256 to 128 hidden layers for frequent classes, 128 to 64 for rare)
-* ProtoSSM v2 with ResidualSSM correction for temporal refinement
-* Shrinkage-weighted site and hour prior tables with circular Gaussian smoothing (sigma = 1.5h)
-
-**Post-processing pipeline**
-
-1. Noise suppression for inconsistent predictions
-2. Temporal smoothing using a fat-tailed t-distribution kernel with a 35-second context window
-3. Preservation of strong SED detections
-4. Sonotype mirroring for acoustically identical species
-5. Adaptive thresholding for rare amphibian, mammal, and reptile classes
-
-Final prediction combines ProtoSSM and distilled SED outputs using a rank-normalised weighted blend of **0.60 / 0.40**.
-
-**Ensemble weight:** 0.965 | **Standalone LB:** 0.949
 
 ---
 
@@ -144,7 +141,7 @@ This approach was identified by analysing high-performing public solutions and c
 
 ### Ensemble blending
 
-Outputs from the three models are converted to percentile ranks (normalising for differing probability calibrations) and combined via weighted blending. Model_74 receives most of the ensemble weight (0.965) given its strongest individual performance.
+Outputs from the three models are converted to percentile ranks — normalising for differing probability calibrations — and combined via weighted blending. The Perch embedding pipeline receives most of the weight given its strongest individual performance.
 
 ---
 
@@ -157,12 +154,12 @@ birdclef-2026/
 ├── docs/
 │   └── pipeline.md              # Detailed pipeline documentation
 ├── scripts/
-│   ├── train_model21.py         # Train EfficientNet SED + ProtoSSM
-│   ├── train_model74.py         # Train Perch + ProtoSSM pipeline
+│   ├── train_model21.py         # Train spectrogram detector
+│   ├── train_model74.py         # Train Perch embedding pipeline
 │   └── predict.py               # Full ensemble inference
 ├── src/
 │   ├── models/                  # Model architectures
-│   ├── postprocessing/          # TAX_SMOOTHING + temporal gates
+│   ├── postprocessing/          # Taxonomy smoothing + temporal gates
 │   ├── ensemble.py              # Blending logic
 │   ├── inference.py             # Deployment inference pipeline
 │   └── utils.py                 # Shared utilities
@@ -170,6 +167,7 @@ birdclef-2026/
 │   └── index.html               # Web frontend
 ├── app.py                       # FastAPI server
 ├── Dockerfile                   # Container definition
+├── .dockerignore
 ├── requirements.txt
 └── README.md
 ```
@@ -185,14 +183,14 @@ The inference service is containerized and deployed on **Microsoft Azure App Ser
 | **Container Registry** | Docker Hub — `josaiahsyiem/birdclef-2026:latest` |
 | **Hosting** | Azure App Service (Linux, Container mode, Central India) |
 | **Model Weights** | [Hugging Face Hub](https://huggingface.co/josaiahsyiem/birdclef-2026-weights) |
-| **API Framework** | FastAPI with gunicorn and uvicorn workers |
+| **API Framework** | FastAPI with gunicorn and a uvicorn ASGI worker |
 | **Base Image** | `python:3.10-slim` with libsndfile1 and ffmpeg |
 
-Model weights are hosted on Hugging Face Hub rather than bundled into the image, and downloaded at container startup via `huggingface_hub.hf_hub_download`. Weight files:
+Model weights are hosted on Hugging Face Hub and downloaded at container startup via `huggingface_hub.hf_hub_download`:
 
 * `perch_v2_no_dft.onnx` (413 MB) — Perch v2 backbone in ONNX format
-* `proto_ssm_74.pt` (2.9 MB) — ProtoSSM weights
-* `residual_ssm_best.pt` (1.8 MB) — ResidualSSM weights
+* `proto_ssm_74.pt` (2.9 MB) — sequence model weights
+* `residual_ssm_best.pt` (1.8 MB) — residual correction weights
 * `site2i_74.json` — site-to-index mapping
 * `taxonomy.csv` — species taxonomy for common and scientific name lookup
 * `sample_submission.csv` — defines the 234 output columns
@@ -211,16 +209,18 @@ Model weights are hosted on Hugging Face Hub rather than bundled into the image,
 ```text
 audio upload -> librosa load (32kHz mono) -> 12 x 5s windows
 -> Perch v2 ONNX -> 1536-dim embeddings
--> ProtoSSM -> ResidualSSM (correction weight 0.35)
+-> sequence model -> residual correction (weight 0.35)
 -> sigmoid -> max across windows -> top-k species
 -> taxonomy lookup for common and scientific names
 ```
 
-### Deployment note
+### Performance note
 
-The current Azure App Service Plan is **Basic B1 (1.75 GB RAM)**. Loading the ONNX backbone alongside PyTorch models approaches this limit, and inference under load may exhaust available memory. Scaling the plan to **B2 (3.5 GB RAM)** resolves this. The frontend and API remain fully operational on B1.
+The service runs on **Basic B1 (1.75 GB RAM, shared vCPU)**. Inference is CPU-only, so a 60-second recording takes noticeably longer than on a GPU. Three choices keep the deployment within this budget:
 
-An earlier deployment exists on Render (`render.yaml` and `Procfile` retained in the repository), but its 512 MB free tier is insufficient to load the model weights. Azure is the active deployment.
+* **CPU-only PyTorch** via `--extra-index-url https://download.pytorch.org/whl/cpu`, which cuts image size substantially and reduces container pull time
+* **A single gunicorn worker**, since each worker loads its own copy of the models
+* **Always On enabled**, so the container stays resident rather than re-pulling the image after idle periods
 
 ---
 
@@ -266,7 +266,9 @@ docker run -p 8000:8000 birdclef-2026
 
 3. **Understanding successful solutions is valuable.** Analysing techniques common to high-ranking public notebooks identified taxonomy-aware post-processing as the highest-impact change.
 
-4. **Perch v2 is a powerful feature extractor.** Frozen Perch embeddings with lightweight task-specific heads outperformed training a CNN from scratch, reflecting the value of large-scale pretraining (10,000+ species).
+4. **Perch v2 is a powerful feature extractor.** Frozen Perch embeddings with lightweight task-specific heads outperformed training a CNN from scratch, reflecting the value of large-scale pretraining across 10,000+ species.
+
+5. **Deployment constraints shape design.** Fitting the pipeline into a 1.75 GB container required CPU-only dependencies, single-worker serving, and moving model weights out of the image — decisions that never surface during local development.
 
 ---
 
@@ -274,7 +276,7 @@ docker run -p 8000:8000 birdclef-2026
 
 Core libraries:
 
-* PyTorch — ProtoSSM, ResidualSSM, EfficientNet SED
+* PyTorch — sequence models and spectrogram detector
 * ONNX Runtime — Perch v2 inference
 * timm — EfficientNet-B0 backbone
 * librosa, torchaudio, soundfile — audio processing
@@ -285,7 +287,18 @@ Core libraries:
 
 See `requirements.txt` for the complete list.
 
+---
 
+## Acknowledgements
+
+This solution builds on ideas and open-source work shared by the BirdCLEF community:
+
+* Tucker Arrants
+* hideyukizushi (yukiZ)
+* Yaroslav Kholmirzayev
+* F.A. Nina
+
+---
 
 ## License
 
